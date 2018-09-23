@@ -40,9 +40,19 @@ trait RegistersUsers
 
         app()->make(CognitoClient::class)->register($request->email, $request->password, $attributes);
 
-        event(new UserRegistered($user = $this->userRepository->create($request->only('first_name', 'last_name', 'email', 'password'))));
+        $user = $this->userRepository->create($request->only('first_name', 'last_name', 'email', 'password'));
+        event(new UserRegistered($user));
 
-        auth()->login($user);
+        if (config('access.users.confirm_email') || config('access.users.requires_approval')) {
+
+            return redirect($this->redirectPath())->withFlashSuccess(
+                config('access.users.requires_approval') ?
+                    __('exceptions.frontend.auth.confirmation.created_pending') :
+                    __('exceptions.frontend.auth.confirmation.created_confirm')
+            );
+        } else {
+            auth()->login($user);
+        }
 
         return $this->registered($request, $user) ?: redirect($this->redirectPath());
     }
