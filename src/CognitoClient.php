@@ -254,6 +254,40 @@ class CognitoClient
     }
 
     /**
+     * Confirms registration of a user and handles the existing alias from a previous user.
+     * https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_ConfirmSignUp.html
+     *
+     * @param  string $username
+     * @param  string $code
+     * @return bool
+     */
+    public function confirmAccount($username, $code)
+    {
+        try {
+            $this->client->confirmSignUp([
+                'ClientId'   => $this->clientId,
+                'ConfirmationCode' => $code,
+                'Username'   => $username,
+            ]);
+
+        } catch (CognitoIdentityProviderException $e) {
+            if ($e->getAwsErrorCode() === self::CODE_MISMATCH || $e->getAwsErrorCode() === self::EXPIRED_CODE) {
+                $this->client->resendConfirmationCode([
+                    'ClientId'   => $this->clientId,
+                    'Username'   => $username,
+                ]);
+
+                return 'code_resent';
+            }
+
+            throw $e;
+        }
+
+        return true;
+    }
+
+
+    /**
      * @param string $username
      *
      * @see https://docs.aws.amazon.com/aws-sdk-php/v3/api/api-cognito-idp-2016-04-18.html#admindeleteuser
@@ -275,6 +309,7 @@ class CognitoClient
             'Username'   => $username,
         ]);
     }
+
 
     public function confirmSignUp($username)
     {
