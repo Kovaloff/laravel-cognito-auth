@@ -4,9 +4,12 @@ namespace Kovaloff\LaravelCognitoAuth\Auth;
 
 use App\Events\Frontend\Auth\UserRegistered;
 use App\Http\Requests\RegisterRequest;
+use Aws\CognitoIdentity\Exception\CognitoIdentityException;
+use Aws\Exception\AwsException;
 use Illuminate\Http\Request;
 use Illuminate\Auth\Events\Registered;
 use Kovaloff\LaravelCognitoAuth\CognitoClient;
+use Kovaloff\LaravelCognitoAuth\Exceptions\InvalidPasswordException;
 use Kovaloff\LaravelCognitoAuth\Exceptions\InvalidUserFieldException;
 use Illuminate\Foundation\Auth\RegistersUsers as BaseSendsRegistersUsers;
 
@@ -38,7 +41,11 @@ trait RegistersUsers
             }
         }
 
-        app()->make(CognitoClient::class)->register($request->email, $request->password, $attributes);
+        try {
+            app()->make(CognitoClient::class)->register($request->email, $request->password, $attributes);
+        } catch (AwsException $e) {
+            return redirect(route('frontend.auth.register'))->withFlashDanger($e->getAwsErrorMessage());
+        }
 
         $user = $this->userRepository->create($request->only('first_name', 'last_name', 'email', 'password'));
         event(new UserRegistered($user));
