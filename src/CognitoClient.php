@@ -111,6 +111,7 @@ class CognitoClient
                 'Username'       => $email,
             ]);
         } catch (CognitoIdentityProviderException $e) {
+
             if ($e->getAwsErrorCode() === self::USERNAME_EXISTS) {
                 return false;
             }
