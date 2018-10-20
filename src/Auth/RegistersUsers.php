@@ -44,6 +44,9 @@ trait RegistersUsers
         try {
             app()->make(CognitoClient::class)->register($request->email, $request->password, $attributes);
         } catch (AwsException $e) {
+            $request->flash();
+            $request->flashExcept(['password', 'password_confirmation']);
+            
             return redirect(route('frontend.auth.register'))->withFlashDanger($e->getAwsErrorMessage());
         }
 
