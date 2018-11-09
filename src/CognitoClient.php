@@ -185,6 +185,22 @@ class CognitoClient
 
         return Password::PASSWORD_RESET;
     }
+    
+     /**
+     * Resends the confirmation (for confirmation of registration) to a specific user in the user pool.
+     * https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_ResendConfirmationCode.html
+     *
+     * @param $username
+     */
+    public function resendConfirmationCode($username)
+    {
+        $this->client->resendConfirmationCode([
+            'ClientId'   => $this->clientId,
+            'Username'   => $username,
+        ]);
+
+        return 'code_resent';
+    }
 
     /**
      * Register a user and send them an email to set their password.
